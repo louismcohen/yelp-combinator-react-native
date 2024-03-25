@@ -8,7 +8,6 @@ import { api } from '../services/api';
 
 import { Dimensions } from 'react-native';
 import Constants from 'expo-constants';
-// import Geolocation from '@react-native-community/geolocation';
 import * as Location from 'expo-location';
 
 const initialRegion = {
@@ -19,8 +18,8 @@ const initialRegion = {
 }
 
 export default MainMap = () => {
-    const [items, setItems] = useState([]);
-    const [markers, setMarkers] = useState([]);
+    const [businesses, setBusinesses] = useState([]);
+    const [selectedBusiness, setSelectedBusiness] = useState({});
     const bottomSheetRef = useRef(null);
 
     const handleSheetChanges = useCallback((index) => {
@@ -34,15 +33,15 @@ export default MainMap = () => {
     useEffect(() => {
         const getCollectionItems = async () => {
             const response = await api.get('');
-            setItems(response.data);
+            setBusinesses(response.data);
         };
 
         getCollectionItems();
     }, [])
 
-    useEffect(() => {
-        console.log({items});
-    }, [items]);
+    // useEffect(() => {
+    //     console.log({businesses});
+    // }, [businesses]);
 
     const snapPoints = [
         100,
@@ -89,41 +88,72 @@ export default MainMap = () => {
         console.log({location});
     }
 
-    // Geolocation.getCurrentPosition(info => console.log(info));
-
     const mapRef = useRef(null);
+    const markerRef = useRef(null);
+
+    useEffect(() => {
+        console.log({markerRef});
+    }, [markerRef]);
+
+    useEffect(() => {
+        selectedBusiness.alias 
+            ? bottomSheetRef.current?.snapToIndex(0)
+            : null;
+        // bottomSheetRef.current?.snapToIndex(0);
+    }, [selectedBusiness])
 
     return (
-        <View style={styles.viewContainer}>
+        <GestureHandlerRootView style={styles.viewContainer}>
             <MapView
                 style={styles.mapContainer}
                 ref={mapRef}
                 initialRegion={initialRegion}
+                userLocationCalloutEnabled
+                onPress={(() => {
+                    setSelectedBusiness({});
+                    bottomSheetRef.current?.close();
+                })}
             >
-                {items.length > 0
-                    ? items.map(item => 
+                {businesses.length > 0
+                    ? businesses.map(biz => 
                         <Marker 
-                            coordinate={item.coordinates}
-                            title={item.name}
-                            description={item.note}
-                            identifier={item.alias}
+                            ref={markerRef}
+                            coordinate={biz.coordinates}
+                            // title={biz.name}
+                            // description={biz.note}
+                            key={biz.alias}
+                            identifier={biz.alias}
                             stopPropagation
+                            pinColor={selectedBusiness.alias === biz.alias ? 'green' : 'red'}
+                            onPress={(() => {
+                                setSelectedBusiness(biz);
+                            })}
                         />)
                     : null}
+                {location
+                    ? 
+                        <Marker
+                            coordinate={location.coords}
+                            pinColor='blue'
+                        />
+                    : null}
+
             </MapView>
-            <GestureHandlerRootView style={styles.viewContainer}>
-                <BottomSheet
-                    ref={bottomSheetRef}
-                    onChange={handleSheetChanges}
-                    snapPoints={snapPoints}
-                    // enablePanDownToClose
-                    // index={-1}
-                >
-                    <BottomSheetView style={styles.bottomSheetContainer}>
-                        <Text style={{ fontSize: 24, fontWeight: '700', alignSelf: 'flex-start', paddingHorizontal: 16}}>Bottom Sheet Text</Text>
-                    </BottomSheetView>
-                </BottomSheet>
-             </GestureHandlerRootView>
-        </View>
+            <BottomSheet
+                ref={bottomSheetRef}
+                onChange={handleSheetChanges}
+                snapPoints={snapPoints}
+                enablePanDownToClose
+                onClose={() => {
+                    setSelectedBusiness({});
+                }}
+            
+                index={-1}
+            >
+                <BottomSheetView style={styles.bottomSheetContainer}>
+                    <Text style={{ fontSize: 24, fontWeight: '700', alignSelf: 'flex-start', paddingHorizontal: 16}}>{selectedBusiness.name}</Text>
+                </BottomSheetView>
+            </BottomSheet>
+        </GestureHandlerRootView>
     )
 }
