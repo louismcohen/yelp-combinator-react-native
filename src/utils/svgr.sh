@@ -1,0 +1,1 @@
+npx @svgr/cli --out-dir ../icons/svg --native --no-dimensions --replace-attr-values "#000=currentColor, " -- ../icons/svg

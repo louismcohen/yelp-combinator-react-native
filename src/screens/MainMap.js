@@ -1,14 +1,22 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import { StyleSheet, View, Text, Image } from 'react-native';
 import MapView, { Marker } from "react-native-maps";
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
+import RoundMarker from '../components/RoundMarker';
+
 import { api } from '../services/api';
+import apiData from '../services/apiData.json';
 
 import { Dimensions } from 'react-native';
 import Constants from 'expo-constants';
 import * as Location from 'expo-location';
+
+import BusinessSheet from '../components/BusinessSheet';
+import { generateHexColorFromCategoryAlias } from '../icons/IconGenerator';
+
+const USE_API = false;
 
 const initialRegion = {
     latitude: 34.041878080486164,
@@ -23,7 +31,9 @@ export default MainMap = () => {
     const bottomSheetRef = useRef(null);
 
     const handleSheetChanges = useCallback((index) => {
-        console.log('handleSheetChanges', index);
+        if (index === -1) {
+            setSelectedBusiness({});
+        }
     }, []);
 
     const screenHeight = Dimensions.get('window').height;
@@ -32,21 +42,39 @@ export default MainMap = () => {
 
     useEffect(() => {
         const getCollectionItems = async () => {
-            const response = await api.get('');
-            setBusinesses(response.data);
+            let data;
+            if (USE_API) {
+                const response = await api.get('');
+                data = response.data;
+            } else {
+                data = apiData.slice(0, 20);
+            }
+            const processedData = processRawBusinesses(data);
+            setBusinesses(processedData);
         };
 
         getCollectionItems();
     }, [])
+
+    const processRawBusinesses = (rawBusinesses) => {
+        const processedBusinesses = rawBusinesses.map(business => {
+            const iconHexColor = generateHexColorFromCategoryAlias(business.categories[0].alias);
+            return {
+                ...business,
+                iconHexColor,
+            }
+        })
+        return processedBusinesses;
+    }
 
     // useEffect(() => {
     //     console.log({businesses});
     // }, [businesses]);
 
     const snapPoints = [
-        100,
-        '50%',
-        topSnapPoint
+        // 100,
+        // '50%',
+        // topSnapPoint
     ]
 
     const styles = StyleSheet.create({
@@ -71,7 +99,7 @@ export default MainMap = () => {
     useEffect(() => {
         const loadLocation = async () => {
             let { status } = await Location.requestForegroundPermissionsAsync();
-            console.log({status})
+            console.log({locationStatus: status})
             if (status !== 'granted') {
                 console.error('Location permission denied');
                 return;
@@ -84,18 +112,19 @@ export default MainMap = () => {
         loadLocation();
     }, [])
 
-    if (location) {
-        console.log({location});
-    }
+    // if (location) {
+    //     console.log({location});
+    // }
 
     const mapRef = useRef(null);
     const markerRef = useRef(null);
 
-    useEffect(() => {
-        console.log({markerRef});
-    }, [markerRef]);
+    // useEffect(() => {
+    //     console.log({markerRef});
+    // }, [markerRef]);
 
     useEffect(() => {
+        console.log({selectedBusiness});
         selectedBusiness.alias 
             ? bottomSheetRef.current?.snapToIndex(0)
             : null;
@@ -115,18 +144,14 @@ export default MainMap = () => {
                 })}
             >
                 {businesses.length > 0
-                    ? businesses.map(biz => 
-                        <Marker 
-                            ref={markerRef}
-                            coordinate={biz.coordinates}
-                            // title={biz.name}
-                            // description={biz.note}
-                            key={biz.alias}
-                            identifier={biz.alias}
-                            stopPropagation
-                            pinColor={selectedBusiness.alias === biz.alias ? 'green' : 'red'}
+                    ? businesses.map(business => 
+                        <RoundMarker 
+                            // ref={markerRef}
+                            key={business.alias}
+                            business={business}
+                            selectedBusiness={selectedBusiness}
                             onPress={(() => {
-                                setSelectedBusiness(biz);
+                                setSelectedBusiness(business);
                             })}
                         />)
                     : null}
@@ -143,16 +168,22 @@ export default MainMap = () => {
                 ref={bottomSheetRef}
                 onChange={handleSheetChanges}
                 snapPoints={snapPoints}
-                enablePanDownToClose
-                onClose={() => {
-                    setSelectedBusiness({});
+                enablePanDownToClose     
+                enableDynamicSizing       
+                index={0}
+                style={{
+                    shadowColor: '#000',
+                    shadowOpacity: 0.7,
+                    shadowOffset: {
+                        width: 0, 
+                        height: 6,
+                    },
+                    shadowRadius: 12,
+
+                    elevation: 5,
                 }}
-            
-                index={-1}
             >
-                <BottomSheetView style={styles.bottomSheetContainer}>
-                    <Text style={{ fontSize: 24, fontWeight: '700', alignSelf: 'flex-start', paddingHorizontal: 16}}>{selectedBusiness.name}</Text>
-                </BottomSheetView>
+                <BusinessSheet selectedBusiness={selectedBusiness} />
             </BottomSheet>
         </GestureHandlerRootView>
     )
