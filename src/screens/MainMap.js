@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { StyleSheet, View, Text, Image } from 'react-native';
-import MapView, { Marker } from "react-native-maps";
+import { Marker } from "react-native-maps";
+import MapView from 'react-native-map-clustering';
 import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import RoundMarker from '../components/RoundMarker';
+import ClusterMarker from '../components/ClusterMarker';
 
 import { api } from '../services/api';
 import apiData from '../services/apiData.json';
@@ -47,7 +49,7 @@ export default MainMap = () => {
                 const response = await api.get('');
                 data = response.data;
             } else {
-                data = apiData.slice(0, 20);
+                data = apiData;
             }
             const processedData = processRawBusinesses(data);
             setBusinesses(processedData);
@@ -142,6 +144,8 @@ export default MainMap = () => {
                     setSelectedBusiness({});
                     bottomSheetRef.current?.close();
                 })}
+                renderCluster={(props) => <ClusterMarker key={props.id} {...props} />}
+                // maxZoom={40}
             >
                 {businesses.length > 0
                     ? businesses.map(business => 
@@ -149,10 +153,12 @@ export default MainMap = () => {
                             // ref={markerRef}
                             key={business.alias}
                             business={business}
+                            coordinate={business.coordinates}
                             selectedBusiness={selectedBusiness}
                             onPress={(() => {
                                 setSelectedBusiness(business);
                             })}
+                            style={{ zIndex: selectedBusiness.alias === business.alias ? businesses.length + 1 : 0 }}
                         />)
                     : null}
                 {location
@@ -170,7 +176,7 @@ export default MainMap = () => {
                 snapPoints={snapPoints}
                 enablePanDownToClose     
                 enableDynamicSizing       
-                index={0}
+                index={-1}
                 style={{
                     shadowColor: '#000',
                     shadowOpacity: 0.7,

@@ -23,7 +23,7 @@ const RoundMarker = ({ business, selectedBusiness, onPress }) => {
         width: `${defaultSize}px`,
       };    
 
-    const markerSize = useSharedValue(32);
+    const markerSize = 32;
     const scaledUp = useSharedValue(1);
 
     // const iconHexColor = generateHexColorFromCategoryAlias(primaryCategoryAlias);
@@ -36,8 +36,8 @@ const RoundMarker = ({ business, selectedBusiness, onPress }) => {
             borderWidth: 1,
             borderColor: !business.visited ? business.iconHexColor || ColorPalette.getHexColorByName('yelpRed') : `rgba(0,0,0,0.20)`,
 
-            height: markerSize.value,
-            width: markerSize.value,
+            height: markerSize,
+            width: markerSize,
 
             justifyContent: 'center',
             alignItems: 'center',
@@ -67,19 +67,20 @@ const RoundMarker = ({ business, selectedBusiness, onPress }) => {
 
             elevation: 3,
 
-            zIndex: isSelected ? 100 : 0,
-
             backgroundColor: business.visited ? business.iconHexColor || ColorPalette.getHexColorByName('yelpRed') : `#fff`,
         },
         icon: {
             fontSize: defaultSize,
             color: iconFillColor,
+            backgroundColor: 'transparent',
         },
     });
 
     const springConfig = {
-        mass: isSelected ? 1 : 1.5,
+        mass: isSelected ? 0.7 : 1.5,
         damping: isSelected ? 8 : 10,
+        // duration: isSelected ? 1000 : 2000,
+        // dampingRatio: isSelected ? 1.5 : 1,
         stiffness: isSelected ? 350 : 150,
         overshootClamping: false,
         restDisplacementThreshold: 0.01,
@@ -102,6 +103,10 @@ const RoundMarker = ({ business, selectedBusiness, onPress }) => {
         scaledUp.value = isSelected ? withSpring(scaledUp.value * 1.25, springConfig) : withSpring(1, springConfig);
     }
 
+    const gradientColors = business.visited
+        ? ['rgba(255,255,255,0.2)', 'rgba(0,0,0,0.2)']
+        : ['rgba(255,255,255,0.2)', `${business.iconHexColor}${'0D'}`]
+
     return (
         <Marker 
             coordinate={business.coordinates}
@@ -114,7 +119,19 @@ const RoundMarker = ({ business, selectedBusiness, onPress }) => {
             <Animated.View style={animatedStyle}>
                 <View style={styles.glow}>
                     <TouchableOpacity activeOpacity={0.7} style={styles.container}>
-                        <Icon style={styles.icon} categoryAlias={primaryCategoryAlias} props={{ fill: iconFillColor, height: defaultSize, width: defaultSize }} />
+                        <LinearGradient
+                            colors={gradientColors}
+                            locations={[0, 0.9]}
+                            style={{
+                                ...StyleSheet.absoluteFillObject,
+                                height: markerSize,
+                                justifyContent: 'center',
+                                alignItems: 'center',
+                                borderRadius: 999,
+                            }}
+                            >
+                            <Icon style={styles.icon} categoryAlias={primaryCategoryAlias} props={{ fill: iconFillColor, height: defaultSize, width: defaultSize }} />
+                        </LinearGradient>
                     </TouchableOpacity>
                 </View>
             </Animated.View>
