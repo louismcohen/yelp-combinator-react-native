@@ -26,7 +26,7 @@ export const parseHours = (business) => {
   let openingMessage = '';
 
   const openingHours = business.hours[0].open;  
-  console.log({hours: business.hours, openingHours})
+  // console.log({hours: business.hours, openingHours})
   const findOpeningBlock = (dayOfWeek) => {
     const openHoursThisDay = openingHours.filter(x => x.day === dayOfWeek);
     if (openHoursThisDay.length > 0) {
