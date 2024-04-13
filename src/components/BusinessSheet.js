@@ -1,4 +1,4 @@
-import { StyleSheet, View, Text, FlatList, SectionList, ImageBackground, TextInput, TouchableOpacity, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { StyleSheet, View, Text, FlatList, SectionList, ImageBackground, TextInput, TouchableOpacity, TouchableWithoutFeedback, Keyboard, Linking } from 'react-native';
 import { BottomSheetView } from '@gorhom/bottom-sheet';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient} from 'expo-linear-gradient';
@@ -140,7 +140,7 @@ const Visited = ({ visited, onPress }) => {
     )
 }
 
-const OpenInYelp = () => {
+const OpenInYelp = ({ onPress }) => {
     return (
         <InfoListItem
             icon='yelp'
@@ -150,7 +150,7 @@ const OpenInYelp = () => {
                     Open in Yelp
                 </Text>
             }
-            onPress={() => console.log('open in yelp')}
+            onPress={onPress}
         />
     )
 }
@@ -187,7 +187,8 @@ const SectionHeader = ({ title, auxComponent }) => {
 }
 
 export default BusinessSheet = ({ selectedBusiness }) => {
-    const { name, coordinates, categories, image_url, location } = selectedBusiness;
+    console.log({selectedBusiness})
+    const { alias, name, coordinates, categories, image_url, location } = selectedBusiness;
     const [note, setNote] = useState(selectedBusiness.note);
     const [visited, setVisited] = useState(selectedBusiness.visited);
 
@@ -273,7 +274,7 @@ export default BusinessSheet = ({ selectedBusiness }) => {
                     data={[
                         <Note note={note} />,
                         <Visited visited={visited} onPress={() => setVisited(!visited)} />,
-                        <OpenInYelp />,
+                        <OpenInYelp onPress={() => Linking.openURL(`https://www.yelp.com/biz/${alias}`)} />,
                     ]}
                     renderItem={({ item }) => item}
                     style={{
