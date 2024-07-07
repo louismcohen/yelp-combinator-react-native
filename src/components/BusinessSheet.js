@@ -29,7 +29,7 @@ const InfoListItem = ({ icon, iconStyles, iconColor, color, content, state = tru
             paddingVertical: 10,
         },
         icon: {
-            flexShrink: 1,
+            
             justifyContent: 'center',
             alignItems: 'center',
             height: 32,
@@ -43,7 +43,7 @@ const InfoListItem = ({ icon, iconStyles, iconColor, color, content, state = tru
             ...iconStyles
         },
         content: {
-            flexGrow: 1,
+            flex: 1,
             justifyContent: 'center',
             alignItems: 'flex-end',
         },
@@ -75,33 +75,49 @@ const listStyles = StyleSheet.create({
     },
     textInput: {
         width: '100%',
+    },
+    warningText: {
+        fontWeight: '700',
+        color: ColorPalette.getHexColorByName('yelpRed'),
+    },
+    successText: {
+        fontWeight: '700',
+        color: ColorPalette.getHexColorByName('kellyGreen'),
     }
 })
 
-const Hours = ({ openingHours }) => {
+const Hours = ({ openingMessage, hours }) => {
+    console.log(hours[0].is_open_now)
+    const styledMessage = hours[0].is_open_now
+        ?   <View style={{ flexDirection: 'row' }}>
+                <Text style={{...listStyles.text, ...listStyles.successText}}>Open</Text>
+                <Text style={listStyles.text}>{openingMessage.replace('Open', '')}</Text>
+            </View>
+        :   <View style={{ flexDirection: 'column' }}>
+                <Text style={{...listStyles.text, ...listStyles.warningText}}>Closed</Text>
+                <Text style={listStyles.text}>{openingMessage}</Text>
+            </View> 
+
     return (
         <InfoListItem 
             icon='clock'
             color={ColorPalette.getHexColorByName('mango')}
-            content={
-                <Text style={listStyles.text}>
-                    {openingHours}
-                </Text>
-            }
+            content={styledMessage}
         />
     )
 } 
 
-const Address = ({ formattedAddress }) => {
+const Address = ({ formattedAddress, onPress }) => {
     return (
         <InfoListItem 
             icon='map-location-dot'
             color={ColorPalette.getHexColorByName('englishViolet')}
             content={
-                <Text numberOfLines={2} style={listStyles.text}>
+                <Text selectable numberOfLines={2} style={listStyles.text}>
                     {formattedAddress}
                 </Text>
             }
+            onPress={onPress}
         />
     )
 }
@@ -186,16 +202,43 @@ const SectionHeader = ({ title, auxComponent }) => {
     )
 }
 
+const formattedAddress = (location, coordinates) => {
+    if (!location) return null;
+
+    const { address1, city, state, zip_code } = location;
+
+    let address = [];
+    if (address1) {
+        address.push(location.address1, '\n');
+    } else if (!address1) {
+        address.push(coordinates.latitude.toFixed(5), ', ', coordinates.longitude.toFixed(5), '\n')
+    }
+    if (city) {
+        address.push(city);
+    }
+    if (!city && state) {
+        address.push(state, ' ');
+    } else if (city && state) {
+        address.push(', ', state, ' ');
+    }
+    if (zip_code) {
+        address.push(zip_code)
+    }
+
+    return address.join('').trim();
+}
+
 export default BusinessSheet = ({ selectedBusiness }) => {
-    console.log({selectedBusiness})
-    const { alias, name, coordinates, categories, image_url, location } = selectedBusiness;
+    if (!selectedBusiness) return null;
+    console.log({selectedBusiness});
+    const { alias, name, coordinates, categories, image_url, location, display_address, openingMessage, hours } = selectedBusiness;
+    console.log({openingMessage, hours})
     const [note, setNote] = useState(selectedBusiness.note);
-    const [visited, setVisited] = useState(selectedBusiness.visited);
-
-    const openingHours = coordinates ? parseHours(selectedBusiness) : null;
-    const formattedAddress = `${location?.address1}\n${location?.city}, ${location?.state} ${location?.zip_code}`;
-
+    const [visited, setVisited] = useState(selectedBusiness.visited || false);
+    
     const insets = useSafeAreaInsets();
+
+    const PHOTO_HEIGHT = 160;
     
     const styles = StyleSheet.create({
         bottomSheetContainer: {
@@ -207,7 +250,7 @@ export default BusinessSheet = ({ selectedBusiness }) => {
         },
         heroImage: {
             width: '100%',
-            height: 200,
+            height: PHOTO_HEIGHT,
             resizeMode: 'cover',
         },
         infoContainer: {
@@ -252,8 +295,11 @@ export default BusinessSheet = ({ selectedBusiness }) => {
                 <FlatList 
                     ItemSeparatorComponent={ItemSeparatorComponent}
                     data={[
-                        <Address formattedAddress={formattedAddress} />,
-                        <Hours openingHours={openingHours} />,
+                        <Address 
+                            formattedAddress={formattedAddress(location, coordinates)}
+                            // onPress={() => Linking.openURL(encodeURI(`https://www.google.com/maps/@?api=1&map_action=map&query=${location.address1}+${location.city}+${location.state}+${location.zip_code}&${coordinates.latitude},${coordinates.longitude}`))}
+                        />,
+                        <Hours openingMessage={openingMessage} hours={hours} />,
                     ]}
                     renderItem={({ item }) => item}
                     style={{
@@ -267,7 +313,7 @@ export default BusinessSheet = ({ selectedBusiness }) => {
             ]
         },
         {
-            title: 'your info',
+            title: 'additional info',
             data: [
                 <FlatList 
                     ItemSeparatorComponent={ItemSeparatorComponent}
@@ -289,34 +335,6 @@ export default BusinessSheet = ({ selectedBusiness }) => {
         }
     ]
 
-    const INFO_LIST_DATA = [
-        {
-            icon: 'map-location-dot',
-            color: ColorPalette.getHexColorByName('englishViolet'),
-            content: <Text numberOfLines={2} style={{ fontSize: 14, color: 'rgba(0,0,0,0.8)', textAlign: 'right'}}>{formattedAddress}</Text>
-        },
-        { 
-            icon: 'clock',
-            color: ColorPalette.getHexColorByName('mango'),
-            content: <Text style={{ fontSize: 14, color: 'rgba(0,0,0,0.8)' }}>{openingHours}</Text>,
-        },
-        { 
-            icon: 'note-sticky',
-            color: ColorPalette.getHexColorByName('sealBrown'),
-            content: <TextInput style={{ width: '100%', textAlign: 'right', fontSize: 14, color: 'rgba(0,0,0,0.8)' }} placeholder='Add a note about this place' value={note ? note?.trim() : null} />,
-        },
-        { 
-            icon: 'check',
-            color: ColorPalette.getHexColorByName('kellyGreen'),
-            content: <Text style={{ fontSize: 14, color: 'rgba(0,0,0,0.8)' }}>{visited ? 'I\'ve been here' : 'I haven\'t been here'}</Text>,
-        },
-        { 
-            icon: 'yelp',
-            color: ColorPalette.getHexColorByName('yelpRed'),
-            content: <OpenInYelp />,
-        },
-    ]
-
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <BottomSheetView style={styles.bottomSheetContainer}>
@@ -326,7 +344,7 @@ export default BusinessSheet = ({ selectedBusiness }) => {
                     locations={[0, 0.8]}
                     style={{
                         ...StyleSheet.absoluteFillObject,
-                        height: 200,
+                        height: PHOTO_HEIGHT,
                     }}
                 >
                     <View style={styles.infoContainer}>

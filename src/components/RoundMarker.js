@@ -12,7 +12,7 @@ import Animated, {
   } from 'react-native-reanimated';
 
 const RoundMarker = ({ business, selectedBusiness, onPress }) => {
-    const isSelected = selectedBusiness.alias === business.alias;
+    const isSelected = selectedBusiness?.alias === business.alias;
     const primaryCategoryAlias = business?.categories[0].alias;
 
     const iconFillVisited = `#fff`;

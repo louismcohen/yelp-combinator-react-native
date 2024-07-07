@@ -25,7 +25,8 @@ export const parseHours = (business) => {
   const nowTimeFormatted = `${now.format('HHmm')}`
   let openingMessage = '';
 
-  const openingHours = business.hours[0].open;  
+  const openingHours = business.hours[0]?.open; 
+  if (!openingHours) return `No information`;
   // console.log({hours: business.hours, openingHours})
   const findOpeningBlock = (dayOfWeek) => {
     const openHoursThisDay = openingHours.filter(x => x.day === dayOfWeek);
@@ -92,6 +93,32 @@ export const parseHours = (business) => {
   }
   
   findOpeningBlock(convertMomentDayToYelpDay(now.day())); // moment day 0 is Sunday, Yelp day 0 is Monday
-  // console.log({openingMessage});
-  return openingMessage;
+  return { openingMessage, hours: business.hours };
+}
+
+export const hexToRgba = (hex, alpha = 1) => {
+  // Remove # if it's included
+  hex = hex.replace('#', '');
+
+  // Parse hex components
+  let r, g, b;
+  if (hex.length === 3) {
+      r = parseInt(hex[0] + hex[0], 16);
+      g = parseInt(hex[1] + hex[1], 16);
+      b = parseInt(hex[2] + hex[2], 16);
+  } else if (hex.length === 6) {
+      r = parseInt(hex.substring(0, 2), 16);
+      g = parseInt(hex.substring(2, 4), 16);
+      b = parseInt(hex.substring(4, 6), 16);
+  } else {
+      throw new Error('Invalid hex color format');
+  }
+
+  // Validate alpha
+  if (alpha < 0 || alpha > 1) {
+      throw new Error('Alpha value must be between 0 and 1');
+  }
+
+  // Return rgba value
+  return `rgba(${r},${g},${b},${alpha})`;
 }

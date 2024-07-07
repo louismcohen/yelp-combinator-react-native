@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { StyleSheet, View, Text, Image } from 'react-native';
 import { Marker } from "react-native-maps";
@@ -8,7 +9,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import RoundMarker from '../components/RoundMarker';
 import ClusterMarker from '../components/ClusterMarker';
 
-import { api } from '../services/api';
+import { api, processRawBusinesses, useBusinessData, useData } from '../services/api';
 import apiData from '../services/apiData.json';
 
 import { Dimensions } from 'react-native';
@@ -16,7 +17,9 @@ import Constants from 'expo-constants';
 import * as Location from 'expo-location';
 
 import BusinessSheet from '../components/BusinessSheet';
+import SearchSheet from '../components/SearchSheet';
 import { generateHexColorFromCategoryAlias } from '../icons/IconGenerator';
+import { parseHours } from '../utils/utils';
 
 const USE_API = false;
 
@@ -27,14 +30,20 @@ const initialRegion = {
     longitudeDelta: 0.1,
 }
 
-export default MainMap = () => {
-    const [businesses, setBusinesses] = useState([]);
-    const [selectedBusiness, setSelectedBusiness] = useState({});
+const MainMap = () => {
+    // const [businesses, setBusinesses] = useState([]);
+    const [selectedBusiness, setSelectedBusiness] = useState();
+
+    const [visitedFilter, setVisitedFilter] = useState(0);
+    const [isOpenFilter, setIsOpenFilter] = useState(0);
+
+    const [filteredBusinesses, setFilteredBusinesses] = useState();
+    
     const bottomSheetRef = useRef(null);
 
     const handleSheetChanges = useCallback((index) => {
         if (index === -1) {
-            setSelectedBusiness({});
+            setSelectedBusiness();
         }
     }, []);
 
@@ -42,36 +51,29 @@ export default MainMap = () => {
     const statusBarHeight = Constants.statusBarHeight;
     const topSnapPoint = screenHeight - statusBarHeight;
 
+    const businessesQuery = useBusinessData(false);
+    const businesses = businessesQuery.data;
+
     useEffect(() => {
-        const getCollectionItems = async () => {
-            let data;
-            if (USE_API) {
-                const response = await api.get('');
-                data = response.data;
-            } else {
-                data = apiData;
-            }
-            const processedData = processRawBusinesses(data);
-            setBusinesses(processedData);
-        };
+        const isVisited = businesses.filter(business => {
+            return visitedFilter === 0
+                ? true
+                : visitedFilter === 1
+                    ? business.visited
+                    : !business.visited
+        });
 
-        getCollectionItems();
-    }, [])
+        const isOpen = businesses.filter(business => {
+            return isOpenFilter === 0
+                ? true 
+                : isOpenFilter === 1
+                    ? business.hours[0].is_open_now
+                    : !business.hours[0].is_open_now
+        });
 
-    const processRawBusinesses = (rawBusinesses) => {
-        const processedBusinesses = rawBusinesses.map(business => {
-            const iconHexColor = generateHexColorFromCategoryAlias(business.categories[0].alias);
-            return {
-                ...business,
-                iconHexColor,
-            }
-        })
-        return processedBusinesses;
-    }
+        console.log(businesses[Math.round(Math.random() * businesses.length)])
 
-    // useEffect(() => {
-    //     console.log({businesses});
-    // }, [businesses]);
+    }, [businesses, visitedFilter, isOpenFilter])
 
     const snapPoints = [
         // 100,
@@ -126,10 +128,12 @@ export default MainMap = () => {
     // }, [markerRef]);
 
     useEffect(() => {
-        console.log({selectedBusiness});
-        selectedBusiness.alias 
-            ? bottomSheetRef.current?.snapToIndex(0)
-            : null;
+        if (selectedBusiness) {
+            selectedBusiness.alias 
+                ? bottomSheetRef.current?.snapToIndex(0)
+                : null;
+        }
+
         // bottomSheetRef.current?.snapToIndex(0);
     }, [selectedBusiness])
 
@@ -141,7 +145,7 @@ export default MainMap = () => {
                 initialRegion={initialRegion}
                 userLocationCalloutEnabled
                 onPress={(() => {
-                    setSelectedBusiness({});
+                    setSelectedBusiness();
                     bottomSheetRef.current?.close();
                 })}
                 renderCluster={(props) => <ClusterMarker key={props.id} {...props} />}
@@ -158,7 +162,7 @@ export default MainMap = () => {
                             onPress={(() => {
                                 setSelectedBusiness(business);
                             })}
-                            style={{ zIndex: selectedBusiness.alias === business.alias ? businesses.length + 1 : 0 }}
+                            style={{ zIndex: selectedBusiness?.alias === business.alias ? businesses.length + 1 : 0 }}
                         />)
                     : null}
                 {location
@@ -170,6 +174,27 @@ export default MainMap = () => {
                     : null}
 
             </MapView>
+            <BottomSheet
+                enableDynamicSizing
+                style={{
+                    shadowColor: '#000',
+                    shadowOpacity: 0.7,
+                    shadowOffset: {
+                        width: 0, 
+                        height: 6,
+                    },
+                    shadowRadius: 12,
+
+                    elevation: 5,
+                }}
+            >
+                <SearchSheet
+                    visitedFilter={visitedFilter}
+                    setVisitedFilter={setVisitedFilter}
+                    isOpenFilter={isOpenFilter}
+                    setIsOpenFilter={setIsOpenFilter}
+                 />
+            </BottomSheet>
             <BottomSheet
                 ref={bottomSheetRef}
                 onChange={handleSheetChanges}
@@ -194,3 +219,5 @@ export default MainMap = () => {
         </GestureHandlerRootView>
     )
 }
+
+export default MainMap;
