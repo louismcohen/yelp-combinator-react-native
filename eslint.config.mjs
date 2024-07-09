@@ -8,7 +8,8 @@ export default [
   { files: ['**/*.{js,mjs,cjs,jsx}'] },
   { languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } } },
   { languageOptions: { globals: globals.browser } },
-  airbnbConfig,
-  // pluginJs.configs.recommended,
-  // ...fixupConfigRules(pluginReactConfig),
+  // airbnbConfig,
+  pluginJs.configs.recommended,
+  ...fixupConfigRules(pluginReactConfig),
+  // ...fixupConfigRules(airbnbConfig),
 ];

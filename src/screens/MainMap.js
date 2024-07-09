@@ -1,3 +1,4 @@
+/* eslint-disable react/prop-types */
 import React from 'react';
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { StyleSheet, View, Text, Image } from 'react-native';
@@ -30,7 +31,7 @@ const initialRegion = {
     longitudeDelta: 0.1,
 }
 
-const MainMap = () => {
+const MainMap = ({ businesses }) => {
     // const [businesses, setBusinesses] = useState([]);
     const [selectedBusiness, setSelectedBusiness] = useState();
 
@@ -51,8 +52,8 @@ const MainMap = () => {
     const statusBarHeight = Constants.statusBarHeight;
     const topSnapPoint = screenHeight - statusBarHeight;
 
-    const businessesQuery = useBusinessData(false);
-    const businesses = businessesQuery.data;
+    // const businessesQuery = useBusinessData(false);
+    // const businesses = businessesQuery.data;
 
     useEffect(() => {
         const isVisited = businesses.filter(business => {
@@ -83,20 +84,17 @@ const MainMap = () => {
 
     const styles = StyleSheet.create({
         viewContainer: {
-            width: '100%',
-            height: '100%',
+            // flex: 1,
         },
         mapContainer: {
-            ...StyleSheet.absoluteFillObject,
-            justifyContent: 'center',
-            alignContent: 'center',
-            // width: '100%',
-            // height: '100%',
-        },
-        bottomSheetContainer: {
             flex: 1,
-            alignItems: 'center',
-        }
+            // ...StyleSheet.absoluteFillObject,
+            // flex: 1, 
+            // justifyContent: 'center',
+            // alignContent: 'center',
+            // width: '100%',
+            // // height: '100%',
+        },
     })
 
     const [location, setLocation] = useState(null);
@@ -138,85 +136,42 @@ const MainMap = () => {
     }, [selectedBusiness])
 
     return (
-        <GestureHandlerRootView style={styles.viewContainer}>
-            <MapView
-                style={styles.mapContainer}
-                ref={mapRef}
-                initialRegion={initialRegion}
-                userLocationCalloutEnabled
-                onPress={(() => {
-                    setSelectedBusiness();
-                    bottomSheetRef.current?.close();
-                })}
-                renderCluster={(props) => <ClusterMarker key={props.id} {...props} />}
-                // maxZoom={40}
-            >
-                {businesses.length > 0
-                    ? businesses.map(business => 
-                        <RoundMarker 
-                            // ref={markerRef}
-                            key={business.alias}
-                            business={business}
-                            coordinate={business.coordinates}
-                            selectedBusiness={selectedBusiness}
-                            onPress={(() => {
-                                setSelectedBusiness(business);
-                            })}
-                            style={{ zIndex: selectedBusiness?.alias === business.alias ? businesses.length + 1 : 0 }}
-                        />)
-                    : null}
-                {location
-                    ? 
-                        <Marker
-                            coordinate={location.coords}
-                            pinColor='blue'
-                        />
-                    : null}
+        <MapView
+            style={styles.mapContainer}
+            ref={mapRef}
+            initialRegion={initialRegion}
+            userLocationCalloutEnabled
+            onPress={(() => {
+                setSelectedBusiness();
+                bottomSheetRef.current?.close();
+            })}
+            renderCluster={(props) => <ClusterMarker key={props.id} {...props} />}
+            mapPadding={{ top: 200 }}
+            // maxZoom={40}
+        >
+            {businesses.length > 0
+                ? businesses.map(business => 
+                    <RoundMarker 
+                        // ref={markerRef}
+                        key={business.alias}
+                        business={business}
+                        coordinate={business.coordinates}
+                        selectedBusiness={selectedBusiness}
+                        onPress={(() => {
+                            setSelectedBusiness(business);
+                        })}
+                        style={{ zIndex: selectedBusiness?.alias === business.alias ? businesses.length + 1 : 0 }}
+                    />)
+                : null}
+            {location
+                ? 
+                    <Marker
+                        coordinate={location.coords}
+                        pinColor='blue'
+                    />
+                : null}
 
-            </MapView>
-            <BottomSheet
-                enableDynamicSizing
-                style={{
-                    shadowColor: '#000',
-                    shadowOpacity: 0.7,
-                    shadowOffset: {
-                        width: 0, 
-                        height: 6,
-                    },
-                    shadowRadius: 12,
-
-                    elevation: 5,
-                }}
-            >
-                <SearchSheet
-                    visitedFilter={visitedFilter}
-                    setVisitedFilter={setVisitedFilter}
-                    isOpenFilter={isOpenFilter}
-                    setIsOpenFilter={setIsOpenFilter}
-                 />
-            </BottomSheet>
-            <BottomSheet
-                ref={bottomSheetRef}
-                onChange={handleSheetChanges}
-                snapPoints={snapPoints}
-                enablePanDownToClose     
-                enableDynamicSizing       
-                index={-1}
-                style={{
-                    shadowColor: '#000',
-                    shadowOpacity: 0.7,
-                    shadowOffset: {
-                        width: 0, 
-                        height: 6,
-                    },
-                    shadowRadius: 12,
-
-                    elevation: 5,
-                }}
-            >
-                <BusinessSheet selectedBusiness={selectedBusiness} />
-            </BottomSheet>
-        </GestureHandlerRootView>
+        </MapView>
     )
 }
 

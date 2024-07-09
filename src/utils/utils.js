@@ -1,6 +1,48 @@
 import moment from 'moment-timezone';
 import tz_lookup from 'tz-lookup'; 
 
+export const getAllUniqueCategories = (businesses) => {
+  const allCategories = businesses.map(x => x.categories).flat().map(y => {return {alias: y.alias, title: y.title}});
+  const uniqueCategories = allCategories.filter((value, index) => allCategories.findIndex(obj => obj.alias === value.alias) === index);
+  const uniqueCategoriesSorted = uniqueCategories.sort((a, b) => (a.title > b.title) ? 1 : - 1);
+
+  // console.log({uniqueCategoriesSorted});
+  return uniqueCategoriesSorted;
+}
+
+export const removeSpaces = (str) => {
+  return str.replace(/\s+/g, '');
+}
+
+export const filterBusinesses = (business, query, showVisited, showOpen) => {
+  const textFilteredResult = (
+    business.name.toLowerCase().includes(query) // name
+    || business.categories.map(category => category.title).some(title => removeSpaces(title).toLowerCase().includes(removeSpaces(query))) // categories
+    || (!!business.note && business.note.toLowerCase().includes(query)) // note
+  )
+  
+  const visitedFilteredResult = 
+  showVisited === 1 
+    ? business.visited : 
+    showVisited === 2 
+      ? !business.visited 
+      : business
+  
+  const openFilteredResult = 
+  showOpen === 1 && business.hours
+    ? business.hours.is_open_now :
+    showOpen === 2 && business.hours
+      ? !business.hours.is_open_now
+      : business.hours
+        ? business
+        : null
+  
+  const attributeFilters = visitedFilteredResult && openFilteredResult;
+  
+  const finalFilteredResult = query && query !== '' ? textFilteredResult && attributeFilters : attributeFilters;
+  return finalFilteredResult;
+};
+
 export const parseHours = (business) => {
   const daysOfTheWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
   const nextDayToCheck = (dayOfWeek) => {

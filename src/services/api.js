@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import apiData from '../services/apiData.json';
-import { parseHours } from '../utils/utils';
+import { getAllUniqueCategories, parseHours } from '../utils/utils';
 import { generateHexColorFromCategoryAlias } from '../icons/IconGenerator';
 import {
     useQuery,
@@ -55,16 +55,19 @@ export const useBusinessData = (useApiData) => {
         placeholderData: [],
     });
 
-    // useEffect(() => {
-    //     console.log('businessesQuery.data', businessesQuery.data);
-    //     if (businessesQuery.data) {
-    //         const { data } = businessesQuery;
-    //         data.map((business) => {
-    //             queryClient.setQueryData(['business', business.alias], businsess)
-    //         });
-    //     }
+    useEffect(() => {
+        // console.log('businessesQuery.data', businessesQuery.data);
+        if (businessesQuery.data) {
+            const { data: businesses } = businessesQuery;
+            businesses.map((business) => {
+                queryClient.setQueryData(['business', business.alias], business)
+            });
 
-    // }, [businessesQuery.data])
+            const categories = getAllUniqueCategories(businesses);
+            categories.map((category) => queryClient.setQueryData(['category', category]));
+        }
+
+    }, [businessesQuery.data])
 
     
     return businessesQuery;
