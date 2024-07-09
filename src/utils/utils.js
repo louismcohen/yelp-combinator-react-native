@@ -14,7 +14,14 @@ export const removeSpaces = (str) => {
   return str.replace(/\s+/g, '');
 }
 
-export const filterBusinesses = (business, query, showVisited, showOpen) => {
+export const nextFilterButtonState = (button, setButton) => {
+  // 0 = disabled, 1 = true, 2 = false
+  button < 2 ? setButton(button + 1) : setButton(0);
+};
+
+export const filterBusinesses = (business, searchQuery, showVisited, showOpen) => {
+  const query = searchQuery?.toLowerCase();
+
   const textFilteredResult = (
     business.name.toLowerCase().includes(query) // name
     || business.categories.map(category => category.title).some(title => removeSpaces(title).toLowerCase().includes(removeSpaces(query))) // categories

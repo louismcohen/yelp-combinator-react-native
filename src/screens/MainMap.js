@@ -31,9 +31,8 @@ const initialRegion = {
     longitudeDelta: 0.1,
 }
 
-const MainMap = ({ businesses }) => {
+const MainMap = ({ businesses, selectedBusiness, setSelectedBusiness }) => {
     // const [businesses, setBusinesses] = useState([]);
-    const [selectedBusiness, setSelectedBusiness] = useState();
 
     const [visitedFilter, setVisitedFilter] = useState(0);
     const [isOpenFilter, setIsOpenFilter] = useState(0);
@@ -125,15 +124,7 @@ const MainMap = ({ businesses }) => {
     //     console.log({markerRef});
     // }, [markerRef]);
 
-    useEffect(() => {
-        if (selectedBusiness) {
-            selectedBusiness.alias 
-                ? bottomSheetRef.current?.snapToIndex(0)
-                : null;
-        }
-
-        // bottomSheetRef.current?.snapToIndex(0);
-    }, [selectedBusiness])
+    
 
     return (
         <MapView
@@ -143,7 +134,6 @@ const MainMap = ({ businesses }) => {
             userLocationCalloutEnabled
             onPress={(() => {
                 setSelectedBusiness();
-                bottomSheetRef.current?.close();
             })}
             renderCluster={(props) => <ClusterMarker key={props.id} {...props} />}
             mapPadding={{ top: 200 }}

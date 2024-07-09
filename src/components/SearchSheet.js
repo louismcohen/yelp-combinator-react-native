@@ -13,7 +13,7 @@ const FilterButton = ({ style, icon, iconSource, text, color, state, onPress }) 
     const accentColor = color || defaultColor;
 
     let borderColor;
-    let backgroundColor;
+    let backgroundColor = 'rgba(255, 255, 255, 0.97)';
     let contentColor;
 
     switch (state) {
@@ -23,9 +23,9 @@ const FilterButton = ({ style, icon, iconSource, text, color, state, onPress }) 
             contentColor = hexToRgba(defaultColor, 0.5);
             break;
         case 1:
-            borderColor = defaultColor;
-            contentColor = 'white';
-            backgroundColor = hexToRgba(accentColor, 0.90);
+            borderColor = hexToRgba(defaultColor, 0.15);
+            contentColor = 'rgba(255, 255, 255, 1.0)';
+            backgroundColor = hexToRgba(accentColor, 0.97);
             break;
         case 2:
             borderColor = accentColor;
@@ -73,7 +73,7 @@ const FilterButton = ({ style, icon, iconSource, text, color, state, onPress }) 
     }
 
     return (
-        <TouchableOpacity style={[styles.container, style]} onPress={onPress}>
+        <TouchableOpacity activeOpacity={0.5} style={[styles.container, style]} onPress={onPress}>
             {iconComponent}
             <Text style={styles.text}>{text}</Text>
         </TouchableOpacity>
@@ -251,8 +251,6 @@ const SearchSheet = ({ visitedFilter, setVisitedFilter, isOpenFilter, setIsOpenF
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <ViewContainer style={styles.container}>
-                
-                
                 <View style={styles.filterContainer}>
                     <VisitedButton visitedFilter={visitedFilter} onPress={() => nextFilterButtonState(visitedFilter, setVisitedFilter)} />
                     <IsOpenButton isOpenFilter={isOpenFilter} onPress={() => nextFilterButtonState(isOpenFilter, setIsOpenFilter)} />

@@ -2,6 +2,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { filterBusinesses } from '../utils/utils';
 import { useBusinessData } from '../services/api';
+import { useDebouncedState } from '../hooks/utils';
 
 const SearchContext = createContext();
 
@@ -10,16 +11,23 @@ export const SearchContextProvider = ({ children }) => {
     const businesses = businessQuery.data;
 
     const [selectedBusiness, setSelectedBusiness] = useState();
-    const [filteredBusinesses, setFilteredBusinesses] = useState();
+    const [filteredBusinesses, setFilteredBusinesses] = useState([]);
 
-    const [searchQuery, setSearchQuery] = useState('');
-    const [visitedFilter, setVisitedFilter] = useState();
-    const [isOpenFilter, setIsOpenFilter] = useState();
+    const [[searchQuery, debouncedSearchQuery], setSearchQuery] = useDebouncedState('', 200);
+    const [visitedFilter, setVisitedFilter] = useState(0);
+    const [isOpenFilter, setIsOpenFilter] = useState(0);
 
     useEffect(() => {
-        console.log('searchQuery', searchQuery);
-        // const filtered = businesses.
-    }, [searchQuery]);
+        // if (!filteredBusinesses && businesses.length > 0) {
+            console.info(filterBusinesses, businesses);
+            setFilteredBusinesses(businesses);
+        // }
+    }, [businesses])
+
+    useEffect(() => {
+        const filtered = businesses.filter((business) => filterBusinesses(business, debouncedSearchQuery, visitedFilter, isOpenFilter));
+        setFilteredBusinesses(filtered);
+    }, [debouncedSearchQuery, visitedFilter, isOpenFilter]);
 
     return (
         <SearchContext.Provider 

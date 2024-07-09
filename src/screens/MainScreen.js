@@ -1,4 +1,4 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { View, StyleSheet, TextInput, SafeAreaView, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import MainMap from './MainMap';
 import { useState } from 'react';
@@ -8,9 +8,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useBusinessData } from '../services/api';
 import SearchSheet, { IsOpenButton, SearchBar, VisitedButton } from '../components/SearchSheet';
 import BusinessSheet from '../components/BusinessSheet';
+import { nextFilterButtonState } from '../utils/utils';
 
 const MainScreen = () => {
-    const { businesses, selectedBusiness, setSelectedBusiness } = useSearchContext();
+    const { filteredBusinesses, selectedBusiness, setSelectedBusiness, visitedFilter, setVisitedFilter, isOpenFilter, setIsOpenFilter } = useSearchContext();
 
     const bottomSheetRef = useRef();
 
@@ -46,7 +47,7 @@ const MainScreen = () => {
             // borderWidth: 1,
         },
         searchFilterControl: {
-            backgroundColor: 'rgba(255, 255, 255, 1)',
+            // backgroundColor: 'rgba(255, 255, 255, 1)',
 
             shadowColor: '#000',
             shadowOffset: {
@@ -57,6 +58,7 @@ const MainScreen = () => {
             shadowRadius: 8,
         },
         searchBar: {
+            backgroundColor: 'rgba(255, 255, 255, 0.97)',
             flexShrink: 1,
             
             borderRadius: 999,
@@ -72,42 +74,40 @@ const MainScreen = () => {
         }
     });
 
+    useEffect(() => {
+        if (selectedBusiness) {
+            selectedBusiness.alias 
+                ? bottomSheetRef.current?.expand()
+                : null;
+        } else {
+            bottomSheetRef.current?.close();
+        }
+
+        // bottomSheetRef.current?.snapToIndex(0);
+    }, [selectedBusiness])
+
     return (
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
             <View style={styles.container}>
                 <MainMap 
-                    businesses={businesses}
+                    businesses={filteredBusinesses}
+                    selectedBusiness={selectedBusiness}
+                    setSelectedBusiness={setSelectedBusiness}
                 />
                 <View style={styles.search}>
                     <SearchBar style={[styles.searchFilterControl, styles.searchBar]} />
                     <View style={styles.filters}>
-                        <VisitedButton style={[styles.searchFilterControl, styles.filter]} />
-                        <IsOpenButton style={[styles.searchFilterControl, styles.filter]} />
+                        <VisitedButton style={[styles.searchFilterControl, styles.filter]} visitedFilter={visitedFilter} onPress={() => nextFilterButtonState(visitedFilter, setVisitedFilter)} />
+                        <IsOpenButton style={[styles.searchFilterControl, styles.filter]} isOpenFilter={isOpenFilter} onPress={() => nextFilterButtonState(isOpenFilter, setIsOpenFilter)} />
                     </View>
                 </View>
-                {/* <BottomSheet
-                    enableDynamicSizing
-                    style={{
-                        shadowColor: '#000',
-                        shadowOpacity: 0.7,
-                        shadowOffset: {
-                            width: 0, 
-                            height: 6,
-                        },
-                        shadowRadius: 12,
-
-                        elevation: 5,
-                    }}
-                >
-                    <SearchSheet isBottomSheet />
-                </BottomSheet> */}
                 <BottomSheet
                     ref={bottomSheetRef}
                     onChange={handleSheetChanges}
-                    snapPoints={[]}
+                    snapPoints={['50%']}
                     enablePanDownToClose     
                     enableDynamicSizing       
-                    index={-1}
+                    index={0}
                     style={{
                         shadowColor: '#000',
                         shadowOpacity: 0.7,
