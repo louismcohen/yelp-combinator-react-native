@@ -9,7 +9,7 @@ export default [
   { languageOptions: { parserOptions: { ecmaFeatures: { jsx: true } } } },
   { languageOptions: { globals: globals.browser } },
   // airbnbConfig,
-  pluginJs.configs.recommended,
-  ...fixupConfigRules(pluginReactConfig),
+  // pluginJs.configs.recommended,
+  // ...fixupConfigRules(pluginReactConfig),
   // ...fixupConfigRules(airbnbConfig),
 ];
